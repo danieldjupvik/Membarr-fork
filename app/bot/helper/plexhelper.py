@@ -1,5 +1,7 @@
-from plexapi.myplex import MyPlexAccount
 import re
+
+from plexapi.myplex import MyPlexAccount
+
 
 def plexadd(plex, plexname, Plex_LIBS):
     try:
@@ -43,6 +45,38 @@ def plexremoveinvite(plex, plexname):
         print(e)
         return False        
 '''
+def plex_restrict_user(plex, email):
+    """Apply noAccess label restriction to Movies and TV Shows"""
+    try:
+        plex.myPlexAccount().updateFriend(
+            user=email, 
+            server=plex,
+            filterMovies={"label": ["noAccess"]},
+            filterTelevision={"label": ["noAccess"]}
+        )
+        print(f"Restricted access for {email}")
+        return True
+    except Exception as e:
+        print(f"Error restricting {email}: {e}")
+        return False
+
+
+def plex_unrestrict_user(plex, email):
+    """Remove label restrictions from user"""
+    try:
+        plex.myPlexAccount().updateFriend(
+            user=email,
+            server=plex,
+            filterMovies={},
+            filterTelevision={}
+        )
+        print(f"Unrestricted access for {email}")
+        return True
+    except Exception as e:
+        print(f"Error unrestricting {email}: {e}")
+        return False
+
+
 def verifyemail(addressToVerify):
     regex = "(^[a-zA-Z0-9'_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
     match = re.match(regex, addressToVerify.lower())
