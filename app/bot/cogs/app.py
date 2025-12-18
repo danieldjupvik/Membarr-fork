@@ -1,18 +1,19 @@
-from pickle import FALSE
-import app.bot.helper.jellyfinhelper as jelly
-from app.bot.helper.textformat import bcolors
-import discord
-from discord.ext import commands
-from discord import app_commands
 import asyncio
+from pickle import FALSE
+
+import discord
+import texttable
+from discord import app_commands
+from discord.ext import commands
 from plexapi.myplex import MyPlexAccount
 from plexapi.server import PlexServer
+
 import app.bot.helper.db as db
-import app.bot.helper.plexhelper as plexhelper
 import app.bot.helper.jellyfinhelper as jelly
-import texttable
-from app.bot.helper.message import *
+import app.bot.helper.plexhelper as plexhelper
 from app.bot.helper.confighelper import *
+from app.bot.helper.message import *
+from app.bot.helper.textformat import bcolors
 
 CONFIG_PATH = 'app/config/config.ini'
 BOT_SECTION = 'bot_envs'
@@ -268,15 +269,29 @@ class app(commands.Cog):
 
                     # Plex role was added
                     if role is not None and (role in after.roles and role not in before.roles):
-                        email = await self.getemail(after)
-                        if email is not None:
-                            await embedinfo(after, "Got it we will be adding your email to plex shortly!")
-                            if plexhelper.plexadd(plex,email,Plex_LIBS):
-                                db.save_user_email(str(after.id), email)
-                                await asyncio.sleep(5)
-                                await embedinfo(after, 'You have Been Added To Plex! Login to plex and accept the invite!')
+                        user_id = after.id
+                        existing_email = db.get_useremail(user_id)
+                        
+                        # Check if user already has an email in DB (was previously restricted)
+                        if existing_email and existing_email != "No email found" and existing_email != "error in fetching from db":
+                            # User was previously restricted, unrestrict them
+                            if plexhelper.plex_unrestrict_user(plex, existing_email):
+                                print("Unrestricted Plex access for {} (email: {})".format(after.name, existing_email))
+                                await embedinfo(after, "Your Plex access has been restored!")
                             else:
-                                await embedinfo(after, 'There was an error adding this email address. Message Server Admin.')
+                                print("Error unrestricting Plex access for {} (email: {})".format(after.name, existing_email))
+                                await embederror(after, "There was an error restoring your Plex access. Contact an admin.")
+                        else:
+                            # New user, prompt for email and invite
+                            email = await self.getemail(after)
+                            if email is not None:
+                                await embedinfo(after, "Got it we will be adding your email to plex shortly!")
+                                if plexhelper.plexadd(plex,email,Plex_LIBS):
+                                    db.save_user_email(str(after.id), email)
+                                    await asyncio.sleep(5)
+                                    await embedinfo(after, 'You have Been Added To Plex! Login to plex and accept the invite!')
+                                else:
+                                    await embedinfo(after, 'There was an error adding this email address. Message Server Admin.')
                         plex_processed = True
                         break
 
@@ -285,17 +300,20 @@ class app(commands.Cog):
                         try:
                             user_id = after.id
                             email = db.get_useremail(user_id)
-                            plexhelper.plexremove(plex,email)
-                            deleted = db.remove_email(user_id)
-                            if deleted:
-                                print("Removed Plex email {} from db".format(after.name))
-                                #await secure.send(plexname + ' ' + after.mention + ' was removed from plex')
+                            if email and email != "No email found" and email != "error in fetching from db":
+                                if plexhelper.plex_restrict_user(plex, email):
+                                    print("Restricted Plex access for {} (email: {})".format(after.name, email))
+                                    await embedinfo(after, "Your Plex access has been restricted. Contact an admin if you believe this is an error.")
+                                else:
+                                    print("Error restricting Plex access for {} (email: {})".format(after.name, email))
+                                    await embederror(after, "There was an error restricting your Plex access. Contact an admin.")
                             else:
-                                print("Cannot remove Plex from this user.")
-                            await embedinfo(after, "You have been removed from Plex")
+                                print("No email found in db for user {}. Cannot restrict Plex access.".format(after.name))
+                                await embederror(after, "No Plex account found. Contact an admin.")
                         except Exception as e:
                             print(e)
-                            print("{} Cannot remove this user from plex.".format(email))
+                            print("Error restricting Plex access for user {}.".format(after.name))
+                            await embederror(after, "There was an error restricting your Plex access. Contact an admin.")
                         plex_processed = True
                         break
                 if plex_processed:
