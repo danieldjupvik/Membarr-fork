@@ -1,5 +1,7 @@
-from plexapi.myplex import MyPlexAccount
 import re
+
+from plexapi.myplex import MyPlexAccount
+
 
 def plexadd(plex, plexname, Plex_LIBS):
     try:
@@ -32,6 +34,36 @@ def plexremove(plex, plexname):
         if removeinvite:
             return True
         '''
+
+def plex_restrict_user(plex, email):
+    """Apply noAccess label restriction to Movies and TV Shows"""
+    try:
+        plex.myPlexAccount().updateFriend(
+            user=email,
+            server=plex,
+            filterMovies={"label": ["noAccess"]},
+            filterTelevision={"label": ["noAccess"]}
+        )
+        print(email + ' has been restricted on plex')
+        return True
+    except Exception as e:
+        print(e)
+        return False
+
+def plex_unrestrict_user(plex, email):
+    """Remove label restrictions from user"""
+    try:
+        plex.myPlexAccount().updateFriend(
+            user=email,
+            server=plex,
+            filterMovies={},
+            filterTelevision={}
+        )
+        print(email + ' has been unrestricted on plex')
+        return True
+    except Exception as e:
+        print(e)
+        return False
         
 '''
 def plexremoveinvite(plex, plexname):
