@@ -273,6 +273,9 @@ class app(commands.Cog):
                             await embedinfo(after, "Got it we will be adding your email to plex shortly!")
                             if plexhelper.plexadd(plex,email,Plex_LIBS):
                                 db.save_user_email(str(after.id), email)
+                                # Remove restrictions if role is re-added
+                                if plexhelper.plexremoverestrictions(plex, email):
+                                    print(f"Removed restrictions for {email} as role was re-added.")
                                 await asyncio.sleep(5)
                                 await embedinfo(after, 'You have Been Added To Plex! Login to plex and accept the invite!')
                             else:
@@ -285,17 +288,14 @@ class app(commands.Cog):
                         try:
                             user_id = after.id
                             email = db.get_useremail(user_id)
-                            plexhelper.plexremove(plex,email)
-                            deleted = db.remove_email(user_id)
-                            if deleted:
-                                print("Removed Plex email {} from db".format(after.name))
-                                #await secure.send(plexname + ' ' + after.mention + ' was removed from plex')
+                            if plexhelper.plexapplyrestrictions(plex,email): # Changed from plexrevokeallaccess
+                                print("Applied Plex library restrictions for {}".format(after.name))
+                                await embedinfo(after, "Plex library restrictions have been applied to your account.")
                             else:
-                                print("Cannot remove Plex from this user.")
-                            await embedinfo(after, "You have been removed from Plex")
+                                print("Cannot apply Plex library restrictions for this user.")
                         except Exception as e:
                             print(e)
-                            print("{} Cannot remove this user from plex.".format(email))
+                            print("{} Cannot apply Plex library restrictions for this user.".format(email))
                         plex_processed = True
                         break
                 if plex_processed:

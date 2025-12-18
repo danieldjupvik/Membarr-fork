@@ -23,6 +23,50 @@ def plexremove(plex, plexname):
     except Exception as e:
         print(e)
         return False
+
+        return False
+
+def plexapplyrestrictions(plex, plexname):
+    try:
+        account = plex.myPlexAccount()
+        friend = None
+        for user in account.users():
+            if user.title == plexname or user.email == plexname:
+                friend = user
+                break
+
+        if not friend:
+            print(f"Plex user '{plexname}' not found among shared users.")
+            return False
+        else:
+            # Apply restrictions: set movie and TV show filters to 'Empty' label
+            friend.updateFriend(filterMovies={'label': ['Empty']}, filterTelevision={'label': ['Empty']})
+            print(f"Successfully applied 'Empty' label restrictions for '{plexname}'.")
+            return True
+    except Exception as e:
+        print(f"Error applying restrictions for '{plexname}': {e}")
+        return False
+
+def plexremoverestrictions(plex, plexname):
+    try:
+        account = plex.myPlexAccount()
+        friend = None
+        for user in account.users():
+            if user.title == plexname or user.email == plexname:
+                friend = user
+                break
+
+        if not friend:
+            print(f"Plex user '{plexname}' not found among shared users.")
+            return False
+        else:
+            # Remove restrictions: set movie and TV show filters to None
+            friend.updateFriend(filterMovies=None, filterTelevision=None)
+            print(f"Successfully removed restrictions for '{plexname}'.")
+            return True
+    except Exception as e:
+        print(f"Error removing restrictions for '{plexname}': {e}")
+        return False
         '''
 
         plex python api has no tools to remove unaccepted invites... 
