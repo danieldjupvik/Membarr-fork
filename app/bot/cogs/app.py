@@ -269,7 +269,7 @@ class app(commands.Cog):
 
                     # Plex role was added
                     if role is not None and (role in after.roles and role not in before.roles):
-                        user_id = after.id
+                        user_id = str(after.id)
                         existing_email = db.get_useremail(user_id)
                         
                         # Check if user already has an email in DB (was previously restricted)
@@ -291,14 +291,14 @@ class app(commands.Cog):
                                     await asyncio.sleep(5)
                                     await embedinfo(after, 'You have Been Added To Plex! Login to plex and accept the invite!')
                                 else:
-                                    await embedinfo(after, 'There was an error adding this email address. Message Server Admin.')
+                                    await embederror(after, 'There was an error adding this email address. Message Server Admin.')
                         plex_processed = True
                         break
 
                     # Plex role was removed
                     elif role is not None and (role not in after.roles and role in before.roles):
                         try:
-                            user_id = after.id
+                            user_id = str(after.id)
                             email = db.get_useremail(user_id)
                             if email and email != "No email found" and email != "error in fetching from db":
                                 if plexhelper.plex_restrict_user(plex, email):
