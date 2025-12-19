@@ -293,9 +293,11 @@ class app(commands.Cog):
                             user_id = after.id
                             email = db.get_useremail(user_id)
                             if plexhelper.verifyemail(str(email)):
-                                plexhelper.plex_restrict_user(plex, email)
-                                print("Restricted Plex access for {}".format(after.name))
-                                await embedinfo(after, "Your Plex access has been restricted because you lost the required role.")
+                                if plexhelper.plex_restrict_user(plex, email):
+                                    print("Restricted Plex access for {}".format(after.name))
+                                    await embedinfo(after, "Your Plex access has been restricted because you lost the required role.")
+                                else:
+                                    print("Failed to restrict Plex access for {}".format(after.name))
                             else:
                                 print("Cannot restrict Plex access for {}, invalid or missing email.".format(after.name))
                         except Exception as e:
