@@ -268,15 +268,22 @@ class app(commands.Cog):
 
                     # Plex role was added
                     if role is not None and (role in after.roles and role not in before.roles):
-                        email = await self.getemail(after)
-                        if email is not None:
-                            await embedinfo(after, "Got it we will be adding your email to plex shortly!")
-                            if plexhelper.plexadd(plex,email,Plex_LIBS):
-                                db.save_user_email(str(after.id), email)
-                                await asyncio.sleep(5)
-                                await embedinfo(after, 'You have Been Added To Plex! Login to plex and accept the invite!')
+                        existing_email = db.get_useremail(str(after.id))
+                        if plexhelper.verifyemail(str(existing_email)):
+                            if plexhelper.plex_unrestrict_user(plex, existing_email):
+                                await embedinfo(after, 'Your Plex access has been restored!')
                             else:
-                                await embedinfo(after, 'There was an error adding this email address. Message Server Admin.')
+                                await embederror(after, 'Error restoring Plex access. Please contact admin.')
+                        else:
+                            email = await self.getemail(after)
+                            if email is not None:
+                                await embedinfo(after, "Got it we will be adding your email to plex shortly!")
+                                if plexhelper.plexadd(plex,email,Plex_LIBS):
+                                    db.save_user_email(str(after.id), email)
+                                    await asyncio.sleep(5)
+                                    await embedinfo(after, 'You have Been Added To Plex! Login to plex and accept the invite!')
+                                else:
+                                    await embedinfo(after, 'There was an error adding this email address. Message Server Admin.')
                         plex_processed = True
                         break
 
@@ -285,17 +292,15 @@ class app(commands.Cog):
                         try:
                             user_id = after.id
                             email = db.get_useremail(user_id)
-                            plexhelper.plexremove(plex,email)
-                            deleted = db.remove_email(user_id)
-                            if deleted:
-                                print("Removed Plex email {} from db".format(after.name))
-                                #await secure.send(plexname + ' ' + after.mention + ' was removed from plex')
+                            if plexhelper.verifyemail(str(email)):
+                                plexhelper.plex_restrict_user(plex, email)
+                                print("Restricted Plex access for {}".format(after.name))
+                                await embedinfo(after, "Your Plex access has been restricted because you lost the required role.")
                             else:
-                                print("Cannot remove Plex from this user.")
-                            await embedinfo(after, "You have been removed from Plex")
+                                print("Cannot restrict Plex access for {}, invalid or missing email.".format(after.name))
                         except Exception as e:
                             print(e)
-                            print("{} Cannot remove this user from plex.".format(email))
+                            print("Error restricting user from plex.")
                         plex_processed = True
                         break
                 if plex_processed:
