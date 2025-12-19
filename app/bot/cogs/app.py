@@ -1,18 +1,19 @@
-from pickle import FALSE
-import app.bot.helper.jellyfinhelper as jelly
-from app.bot.helper.textformat import bcolors
-import discord
-from discord.ext import commands
-from discord import app_commands
 import asyncio
+from pickle import FALSE
+
+import discord
+import texttable
+from discord import app_commands
+from discord.ext import commands
 from plexapi.myplex import MyPlexAccount
 from plexapi.server import PlexServer
+
 import app.bot.helper.db as db
-import app.bot.helper.plexhelper as plexhelper
 import app.bot.helper.jellyfinhelper as jelly
-import texttable
-from app.bot.helper.message import *
+import app.bot.helper.plexhelper as plexhelper
 from app.bot.helper.confighelper import *
+from app.bot.helper.message import *
+from app.bot.helper.textformat import bcolors
 
 CONFIG_PATH = 'app/config/config.ini'
 BOT_SECTION = 'bot_envs'
@@ -271,8 +272,10 @@ class app(commands.Cog):
                         existing_email = db.get_useremail(str(after.id))
                         if plexhelper.verifyemail(str(existing_email)):
                             if plexhelper.plex_unrestrict_user(plex, existing_email):
+                                print("Restored Plex access for {}".format(after.name))
                                 await embedinfo(after, 'Your Plex access has been restored!')
                             else:
+                                print("Failed to restore Plex access for {}".format(after.name))
                                 await embederror(after, 'Error restoring Plex access. Please contact admin.')
                         else:
                             email = await self.getemail(after)
