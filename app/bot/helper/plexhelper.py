@@ -43,6 +43,35 @@ def plexremoveinvite(plex, plexname):
         print(e)
         return False        
 '''
+
+def plex_restrict_user(plex, email):
+    try:
+        plex.myPlexAccount().updateFriend(
+            user=email, 
+            server=plex,
+            filterMovies={"label": ["noAccess"]},
+            filterTelevision={"label": ["noAccess"]}
+        )
+        print(f"Restricted access for {email}")
+        return True
+    except Exception as e:
+        print(f"Error restricting user {email}: {e}")
+        return False
+
+def plex_unrestrict_user(plex, email):
+    try:
+        plex.myPlexAccount().updateFriend(
+            user=email,
+            server=plex,
+            filterMovies={},
+            filterTelevision={}
+        )
+        print(f"Unrestricted access for {email}")
+        return True
+    except Exception as e:
+        print(f"Error unrestricting user {email}: {e}")
+        return False
+
 def verifyemail(addressToVerify):
     regex = "(^[a-zA-Z0-9'_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
     match = re.match(regex, addressToVerify.lower())
