@@ -46,38 +46,83 @@ def plexremoveinvite(plex, plexname):
         return False        
 '''
 
-def plex_restrict_user(plex, email, plex_libs):
+def _update_share_filters(account, user, filter_movies=None, filter_television=None):
+    """Update sharing filters using the clients.plex.tv endpoint (same as Plex Web UI).
+    
+    Parameters:
+        account: MyPlexAccount object
+        user: MyPlexUser object
+        filter_movies: Dict with filter criteria for movies (e.g., {"label": ["noAccess"]})
+        filter_television: Dict with filter criteria for television (e.g., {"label": ["noAccess"]})
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    url = "https://clients.plex.tv/api/v2/sharing_settings"
+    
+    # Get current sharing settings from the user object
+    def get_setting(attr, default):
+        val = getattr(user, attr, None)
+        return val if val is not None else default
+    
+    payload = {
+        "settings": {
+            "allowChannels": get_setting('allowChannels', False),
+            "filterMovies": account._filterDictToStr(filter_movies or {}),
+            "filterMusic": get_setting('filterMusic', "") or "",
+            "filterPhotos": get_setting('filterPhotos', "") or "",
+            "filterTelevision": account._filterDictToStr(filter_television or {}),
+            "filterAll": get_setting('filterAll', "") or "",
+            "allowSync": get_setting('allowSync', False),
+            "allowCameraUpload": get_setting('allowCameraUpload', False),
+            "allowSubtitleAdmin": get_setting('allowSubtitleAdmin', False),
+            "allowTuners": get_setting('allowTuners', 0)
+        },
+        "invitedEmail": user.username
+    }
+    
+    headers = {'Content-Type': 'application/json'}
+    
     try:
-        sections = plex_libs
-        if sections[0] == "all":
-            sections = plex.library.sections()
-        plex.myPlexAccount().updateFriend(
-            user=email, 
-            server=plex,
-            sections=sections,
-            filterMovies={"label": ["noAccess"]},
-            filterTelevision={"label": ["noAccess"]}
-        )
-        print(f"Restricted access for {email}")
+        account.query(url, method=account._session.post, json=payload, headers=headers)
         return True
+    except Exception as e:
+        print(f"Failed to update share filters: {e}")
+        return False
+
+
+def plex_restrict_user(plex, email):
+    try:
+        account = plex.myPlexAccount()
+        user = account.user(email)
+        success = _update_share_filters(
+            account, 
+            user,
+            filter_movies={"label": ["noAccess"]}, 
+            filter_television={"label": ["noAccess"]}
+        )
+        if success:
+            print(f"Restricted access for {email}")
+            return True
+        return False
     except Exception as e:
         print(f"Error restricting user {email}: {e}")
         return False
 
-def plex_unrestrict_user(plex, email, plex_libs):
+def plex_unrestrict_user(plex, email):
     try:
-        sections = plex_libs
-        if sections[0] == "all":
-            sections = plex.library.sections()
-        plex.myPlexAccount().updateFriend(
-            user=email,
-            server=plex,
-            sections=sections,
-            filterMovies={},
-            filterTelevision={}
+        account = plex.myPlexAccount()
+        user = account.user(email)
+        success = _update_share_filters(
+            account, 
+            user,
+            filter_movies={}, 
+            filter_television={}
         )
-        print(f"Unrestricted access for {email}")
-        return True
+        if success:
+            print(f"Unrestricted access for {email}")
+            return True
+        return False
     except Exception as e:
         print(f"Error unrestricting user {email}: {e}")
         return False
