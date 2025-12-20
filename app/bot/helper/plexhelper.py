@@ -1,5 +1,7 @@
-from plexapi.myplex import MyPlexAccount
 import re
+
+from plexapi.myplex import MyPlexAccount
+
 
 def plexadd(plex, plexname, Plex_LIBS):
     try:
@@ -44,11 +46,15 @@ def plexremoveinvite(plex, plexname):
         return False        
 '''
 
-def plex_restrict_user(plex, email):
+def plex_restrict_user(plex, email, plex_libs):
     try:
+        sections = plex_libs
+        if sections[0] == "all":
+            sections = plex.library.sections()
         plex.myPlexAccount().updateFriend(
             user=email, 
             server=plex,
+            sections=sections,
             filterMovies={"label": ["noAccess"]},
             filterTelevision={"label": ["noAccess"]}
         )
@@ -58,11 +64,15 @@ def plex_restrict_user(plex, email):
         print(f"Error restricting user {email}: {e}")
         return False
 
-def plex_unrestrict_user(plex, email):
+def plex_unrestrict_user(plex, email, plex_libs):
     try:
+        sections = plex_libs
+        if sections[0] == "all":
+            sections = plex.library.sections()
         plex.myPlexAccount().updateFriend(
             user=email,
             server=plex,
+            sections=sections,
             filterMovies={},
             filterTelevision={}
         )
