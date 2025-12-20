@@ -271,7 +271,7 @@ class app(commands.Cog):
                     if role is not None and (role in after.roles and role not in before.roles):
                         existing_email = db.get_useremail(str(after.id))
                         if plexhelper.verifyemail(str(existing_email)):
-                            if plexhelper.plex_unrestrict_user(plex, existing_email):
+                            if plexhelper.plex_unrestrict_user(plex, existing_email, Plex_LIBS):
                                 print("Restored Plex access for {}".format(after.name))
                                 await embedinfo(after, 'Your Plex access has been restored!')
                             else:
@@ -296,7 +296,7 @@ class app(commands.Cog):
                             user_id = after.id
                             email = db.get_useremail(user_id)
                             if plexhelper.verifyemail(str(email)):
-                                if plexhelper.plex_restrict_user(plex, email):
+                                if plexhelper.plex_restrict_user(plex, email, Plex_LIBS):
                                     print("Restricted Plex access for {}".format(after.name))
                                     await embedinfo(after, "Your Plex access has been restricted because you lost the required role.")
                                 else:
