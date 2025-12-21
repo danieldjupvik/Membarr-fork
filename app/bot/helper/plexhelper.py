@@ -54,6 +54,9 @@ def plexremoveinvite(plex, plexname):
 
 def _update_share_filters(account, user, filter_movies=None, filter_television=None):
     """Update sharing filters using the clients.plex.tv endpoint (same as Plex Web UI).
+
+    Note: Using direct API call instead of updateFriend() because updateFriend() 
+    does not properly work as of 2025-12-21.
     
     Parameters:
         account: MyPlexAccount object
