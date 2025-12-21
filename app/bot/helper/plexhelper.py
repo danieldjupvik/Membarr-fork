@@ -139,8 +139,14 @@ def _plex_unrestrict_user_sync(plex, email):
             print(f"Unrestricted access for {email}")
             return True
         return False
+    except plexapi.exceptions.NotFound as e:
+        print(f"User not found when unrestricting {email}: {e}")
+        return False
+    except plexapi.exceptions.BadRequest as e:
+        print(f"Bad request when unrestricting {email}: {e}")
+        return False
     except Exception as e:
-        print(f"Error unrestricting user {email}: {e}")
+        print(f"Unexpected error unrestricting user {email}: {e}")
         return False
 
 async def plex_unrestrict_user(plex, email):
