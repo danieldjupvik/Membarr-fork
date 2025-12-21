@@ -157,8 +157,8 @@ class app(commands.Cog):
     
     async def getemail(self, after):
         email = None
-        await embedinfo(after,'Welcome To '+ PLEX_SERVER_NAME +'. Please reply with your email to be added to the Plex server!')
-        await embedinfo(after,'If you do not respond within 24 hours, the request will be cancelled, and the server admin will need to add you manually.')
+        await embedinfo(after,'Velkommen til '+ PLEX_SERVER_NAME +'. Svar med e-postadressen din for å bli lagt til i Plex-serveren!')
+        await embedinfo(after,'Hvis du ikke svarer innen 24 timer, vil forespørselen bli kansellert, og serveradministratoren må legge deg til manuelt.')
         while(email == None):
             def check(m):
                 return m.author == after and not m.guild
@@ -168,18 +168,18 @@ class app(commands.Cog):
                     return str(email.content)
                 else:
                     email = None
-                    message = "The email you provided is invalid, please respond only with the email you used to sign up for Plex."
+                    message = "E-postadressen du oppga er ugyldig. Vennligst svar kun med e-postadressen du brukte for å registrere deg på Plex."
                     await embederror(after, message)
                     continue
             except asyncio.TimeoutError:
-                message = "Timed out. Please contact the server admin directly."
+                message = "Tidsavbrudd. Vennligst kontakt serveradministratoren direkte."
                 await embederror(after, message)
                 return None
     
     async def getusername(self, after):
         username = None
-        await embedinfo(after, f"Welcome To Jellyfin! Please reply with your username to be added to the Jellyfin server!")
-        await embedinfo(after, f"If you do not respond within 24 hours, the request will be cancelled, and the server admin will need to add you manually.")
+        await embedinfo(after, f"Velkommen til Jellyfin! Svar med brukernavnet ditt for å bli lagt til i Jellyfin-serveren!")
+        await embedinfo(after, f"Hvis du ikke svarer innen 24 timer, vil forespørselen bli kansellert, og serveradministratoren må legge deg til manuelt.")
         while (username is None):
             def check(m):
                 return m.author == after and not m.guild
@@ -189,16 +189,16 @@ class app(commands.Cog):
                     return str(username.content)
                 else:
                     username = None
-                    message = "This username is already choosen. Please select another username."
+                    message = "Dette brukernavnet er allerede valgt. Vennligst velg et annet brukernavn."
                     await embederror(after, message)
                     continue
             except asyncio.TimeoutError:
-                message = "Timed out. Please contact the server admin directly."
+                message = "Tidsavbrudd. Vennligst kontakt serveradministratoren direkte."
                 print("Jellyfin user prompt timed out")
                 await embederror(after, message)
                 return None
             except Exception as e:
-                await embederror(after, "Something went wrong. Please try again with another username.")
+                await embederror(after, "Noe gikk galt. Vennligst prøv igjen med et annet brukernavn.")
                 print (e)
                 username = None
 
@@ -273,20 +273,20 @@ class app(commands.Cog):
                         if plexhelper.verifyemail(str(existing_email)):
                             if await plexhelper.plex_unrestrict_user(plex, existing_email):
                                 print("Restored Plex access for {}".format(after.name))
-                                await embedinfo(after, 'Your Plex access has been restored!')
+                                await embedinfo(after, 'Din tilgang til Plex har blitt gjenopprettet!')
                             else:
                                 print("Failed to restore Plex access for {}".format(after.name))
-                                await embederror(after, 'Error restoring Plex access. Please contact admin.')
+                                await embederror(after, 'Feil ved gjenoppretting av Plex-tilgang. Vennligst kontakt administrator.')
                         else:
                             email = await self.getemail(after)
                             if email is not None:
-                                await embedinfo(after, "Got it we will be adding your email to plex shortly!")
+                                await embedinfo(after, "Mottatt, vi legger til e-postadressen din i Plex straks!")
                                 if plexhelper.plexadd(plex,email,Plex_LIBS):
                                     db.save_user_email(str(after.id), email)
                                     await asyncio.sleep(5)
-                                    await embedinfo(after, 'You have Been Added To Plex! Login to plex and accept the invite!')
+                                    await embedinfo(after, 'Du har blitt lagt til i Plex! Logg inn på Plex og godta invitasjonen!')
                                 else:
-                                    await embedinfo(after, 'There was an error adding this email address. Message Server Admin.')
+                                    await embedinfo(after, 'Det oppstod en feil ved tillegging av denne e-postadressen. Send melding til serveradministrator.')
                         plex_processed = True
                         break
 
@@ -298,17 +298,17 @@ class app(commands.Cog):
                             if plexhelper.verifyemail(str(email)):
                                 if await plexhelper.plex_restrict_user(plex, email):
                                     print("Restricted Plex access for {}".format(after.name))
-                                    await embedinfo(after, "Your Plex access has been restricted because you lost the required role.")
+                                    await embedinfo(after, "Din tilgang til Plex har blitt begrenset fordi du mistet den nødvendige rollen.")
                                 else:
                                     print("Failed to restrict Plex access for {}".format(after.name))
-                                    await embederror(after, "Failed to restrict your Plex access. Please contact an admin.")
+                                    await embederror(after, "Kunne ikke begrense din tilgang til Plex. Vennligst kontakt en administrator.")
                             else:
                                 print("Cannot restrict Plex access for {}, invalid or missing email.".format(after.name))
-                                await embederror(after, "Cannot restrict Plex access due to invalid or missing email. Please contact an admin.")
+                                await embederror(after, "Kan ikke begrense Plex-tilgang på grunn av ugyldig eller manglende e-postadresse. Vennligst kontakt en administrator.")
                         except Exception as e:
                             print(e)
                             print("Error restricting user from plex.")
-                            await embederror(after, "An error occurred while restricting your Plex access. Please contact an admin.")
+                            await embederror(after, "En feil oppstod under begrensning av din Plex-tilgang. Vennligst kontakt en administrator.")
                         plex_processed = True
                         break
                 if plex_processed:
@@ -328,15 +328,15 @@ class app(commands.Cog):
                         username = await self.getusername(after)
                         print("Username retrieved from user")
                         if username is not None:
-                            await embedinfo(after, "Got it we will be creating your Jellyfin account shortly!")
+                            await embedinfo(after, "Mottatt, vi oppretter din Jellyfin-konto straks!")
                             password = jelly.generate_password(16)
                             if jelly.add_user(JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, username, password, jellyfin_libs):
                                 db.save_user_jellyfin(str(after.id), username)
                                 await asyncio.sleep(5)
-                                await embedcustom(after, "You have been added to Jellyfin!", {'Username': username, 'Password': f"||{password}||"})
-                                await embedinfo(after, f"Go to {JELLYFIN_EXTERNAL_URL} to log in!")
+                                await embedcustom(after, "Du har blitt lagt til i Jellyfin!", {'Brukernavn': username, 'Passord': f"||{password}||"})
+                                await embedinfo(after, f"Gå til {JELLYFIN_EXTERNAL_URL} for å logge inn!")
                             else:
-                                await embedinfo(after, 'There was an error adding this user to Jellyfin. Message Server Admin.')
+                                await embedinfo(after, 'Det oppstod en feil ved tillegging av denne brukeren til Jellyfin. Send melding til serveradministrator.')
                         jellyfin_processed = True
                         break
 
@@ -353,7 +353,7 @@ class app(commands.Cog):
                                 #await secure.send(plexname + ' ' + after.mention + ' was removed from plex')
                             else:
                                 print("Cannot remove Jellyfin from this user")
-                            await embedinfo(after, "You have been removed from Jellyfin")
+                            await embedinfo(after, "Du har blitt fjernet fra Jellyfin")
                         except Exception as e:
                             print(e)
                             print("{} Cannot remove this user from Jellyfin.".format(username))
