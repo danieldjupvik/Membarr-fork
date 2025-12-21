@@ -1,5 +1,8 @@
+import asyncio
 import re
 
+import plexapi.exceptions
+import requests
 from plexapi.myplex import MyPlexAccount
 
 
@@ -85,13 +88,17 @@ def _update_share_filters(account, user, filter_movies=None, filter_television=N
     
     try:
         account.query(url, method=account._session.post, json=payload, headers=headers)
-        return True
-    except Exception as e:
-        print(f"Failed to update share filters: {e}")
+    except (plexapi.exceptions.PlexApiException, requests.exceptions.RequestException) as e:
+        print(f"Failed to update share filters (API/Request error): {e}")
         return False
+    except Exception as e:
+        print(f"Failed to update share filters (unexpected error): {e}")
+        return False
+    else:
+        return True
 
 
-def plex_restrict_user(plex, email):
+def _plex_restrict_user_sync(plex, email):
     try:
         account = plex.myPlexAccount()
         user = account.user(email)
@@ -105,11 +112,20 @@ def plex_restrict_user(plex, email):
             print(f"Restricted access for {email}")
             return True
         return False
+    except plexapi.exceptions.NotFound as e:
+        print(f"User not found when restricting {email}: {e}")
+        return False
+    except plexapi.exceptions.BadRequest as e:
+        print(f"Bad request when restricting {email}: {e}")
+        return False
     except Exception as e:
-        print(f"Error restricting user {email}: {e}")
+        print(f"Unexpected error restricting user {email}: {e}")
         return False
 
-def plex_unrestrict_user(plex, email):
+async def plex_restrict_user(plex, email):
+    return await asyncio.to_thread(_plex_restrict_user_sync, plex, email)
+
+def _plex_unrestrict_user_sync(plex, email):
     try:
         account = plex.myPlexAccount()
         user = account.user(email)
@@ -126,6 +142,9 @@ def plex_unrestrict_user(plex, email):
     except Exception as e:
         print(f"Error unrestricting user {email}: {e}")
         return False
+
+async def plex_unrestrict_user(plex, email):
+    return await asyncio.to_thread(_plex_unrestrict_user_sync, plex, email)
 
 def verifyemail(addressToVerify):
     regex = "(^[a-zA-Z0-9'_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"

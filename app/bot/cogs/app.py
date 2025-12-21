@@ -271,7 +271,7 @@ class app(commands.Cog):
                     if role is not None and (role in after.roles and role not in before.roles):
                         existing_email = db.get_useremail(str(after.id))
                         if plexhelper.verifyemail(str(existing_email)):
-                            if plexhelper.plex_unrestrict_user(plex, existing_email):
+                            if await plexhelper.plex_unrestrict_user(plex, existing_email):
                                 print("Restored Plex access for {}".format(after.name))
                                 await embedinfo(after, 'Your Plex access has been restored!')
                             else:
@@ -296,16 +296,19 @@ class app(commands.Cog):
                             user_id = after.id
                             email = db.get_useremail(user_id)
                             if plexhelper.verifyemail(str(email)):
-                                if plexhelper.plex_restrict_user(plex, email):
+                                if await plexhelper.plex_restrict_user(plex, email):
                                     print("Restricted Plex access for {}".format(after.name))
                                     await embedinfo(after, "Your Plex access has been restricted because you lost the required role.")
                                 else:
                                     print("Failed to restrict Plex access for {}".format(after.name))
+                                    await embederror(after, "Failed to restrict your Plex access. Please contact an admin.")
                             else:
                                 print("Cannot restrict Plex access for {}, invalid or missing email.".format(after.name))
+                                await embederror(after, "Cannot restrict Plex access due to invalid or missing email. Please contact an admin.")
                         except Exception as e:
                             print(e)
                             print("Error restricting user from plex.")
+                            await embederror(after, "An error occurred while restricting your Plex access. Please contact an admin.")
                         plex_processed = True
                         break
                 if plex_processed:
