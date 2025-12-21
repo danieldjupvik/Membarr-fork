@@ -1,9 +1,12 @@
 import asyncio
 import re
+import threading
 
 import plexapi.exceptions
 import requests
 from plexapi.myplex import MyPlexAccount
+
+_plex_lock = threading.Lock()
 
 
 def plexadd(plex, plexname, Plex_LIBS):
@@ -99,55 +102,57 @@ def _update_share_filters(account, user, filter_movies=None, filter_television=N
 
 
 def _plex_restrict_user_sync(plex, email):
-    try:
-        account = plex.myPlexAccount()
-        user = account.user(email)
-        success = _update_share_filters(
-            account, 
-            user,
-            filter_movies={"label": ["noAccess"]}, 
-            filter_television={"label": ["noAccess"]}
-        )
-        if success:
-            print(f"Restricted access for {email}")
-            return True
-        return False
-    except plexapi.exceptions.NotFound as e:
-        print(f"User not found when restricting {email}: {e}")
-        return False
-    except plexapi.exceptions.BadRequest as e:
-        print(f"Bad request when restricting {email}: {e}")
-        return False
-    except Exception as e:
-        print(f"Unexpected error restricting user {email}: {e}")
-        return False
+    with _plex_lock:
+        try:
+            account = plex.myPlexAccount()
+            user = account.user(email)
+            success = _update_share_filters(
+                account, 
+                user,
+                filter_movies={"label": ["noAccess"]}, 
+                filter_television={"label": ["noAccess"]}
+            )
+            if success:
+                print(f"Restricted access for {email}")
+                return True
+            return False
+        except plexapi.exceptions.NotFound as e:
+            print(f"User not found when restricting {email}: {e}")
+            return False
+        except plexapi.exceptions.BadRequest as e:
+            print(f"Bad request when restricting {email}: {e}")
+            return False
+        except Exception as e:
+            print(f"Unexpected error restricting user {email}: {e}")
+            return False
 
 async def plex_restrict_user(plex, email):
     return await asyncio.to_thread(_plex_restrict_user_sync, plex, email)
 
 def _plex_unrestrict_user_sync(plex, email):
-    try:
-        account = plex.myPlexAccount()
-        user = account.user(email)
-        success = _update_share_filters(
-            account, 
-            user,
-            filter_movies={}, 
-            filter_television={}
-        )
-        if success:
-            print(f"Unrestricted access for {email}")
-            return True
-        return False
-    except plexapi.exceptions.NotFound as e:
-        print(f"User not found when unrestricting {email}: {e}")
-        return False
-    except plexapi.exceptions.BadRequest as e:
-        print(f"Bad request when unrestricting {email}: {e}")
-        return False
-    except Exception as e:
-        print(f"Unexpected error unrestricting user {email}: {e}")
-        return False
+    with _plex_lock:
+        try:
+            account = plex.myPlexAccount()
+            user = account.user(email)
+            success = _update_share_filters(
+                account, 
+                user,
+                filter_movies={}, 
+                filter_television={}
+            )
+            if success:
+                print(f"Unrestricted access for {email}")
+                return True
+            return False
+        except plexapi.exceptions.NotFound as e:
+            print(f"User not found when unrestricting {email}: {e}")
+            return False
+        except plexapi.exceptions.BadRequest as e:
+            print(f"Bad request when unrestricting {email}: {e}")
+            return False
+        except Exception as e:
+            print(f"Unexpected error unrestricting user {email}: {e}")
+            return False
 
 async def plex_unrestrict_user(plex, email):
     return await asyncio.to_thread(_plex_unrestrict_user_sync, plex, email)
